@@ -1,35 +1,35 @@
-# Zadanie 1 – model fragmentu aplikacji bankowej
+# Zadanie 1 – model aplikacji bankowej
 
-Model obejmuje klienta, jego konta i przelewy pomiędzy kontami w tym samym banku. Podzieliłem go na trzy konteksty: Klienci, Konta i Przelewy. Każdy kontekst odpowiada za własne dane, a pozostałe obiekty wskazuje przez identyfikatory. Dla uproszczenia obsługiwane są tylko przelewy w PLN, bez kredytów i przewalutowania.
-
-## Model
+Wybrałem fragment bankowości związany z kontami i przelewami. Model ma trzy konteksty: Klienci, Konta i Przelewy. Każdy z nich przechowuje swoje dane, a do pozostałych odwołuje się przez ID. Zakładam przelewy tylko w PLN, między kontami w tym samym banku.
 
 ![Model DDD](docs/ddd-model.png)
 
-## Konteksty i agregaty
+## Podział modelu
 
-- **Klienci** – agregat `Klient`, którego korzeniem jest encja Klient. Przechowuje dane osoby oraz obiekt wartości Adres.
-- **Konta** – agregat `KontoBankowe`, z encją KontoBankowe jako korzeniem. Konto przechowuje identyfikator właściciela, NumerRachunku i saldo jako obiekt wartości Pieniadze.
-- **Przelewy** – agregat `Przelew`, z encją Przelew jako korzeniem. Zawiera identyfikatory obu kont, kwotę i status realizacji.
+| Kontekst | Agregat i jego korzeń | Obiekty wartości |
+| --- | --- | --- |
+| Klienci | Klient | Adres |
+| Konta | KontoBankowe | NumerRachunku, Pieniadze |
+| Przelewy | Przelew | Pieniadze jako kwota przelewu |
 
-Encje mają własną tożsamość (UUID). Obiekty wartości nie mają ID: porównuję je po zawartości i przy zmianie zastępuję całym nowym obiektem.
+Klient, KontoBankowe i Przelew to encje z własnym ID typu UUID. Obiekty wartości nie mają ID i są porównywane po zawartości.
 
-## Atrybuty i ograniczenia
+## Dane i ograniczenia
 
-| Element | Atrybuty i przyjęte zasady |
+| Element | Atrybuty i zasady |
 | --- | --- |
-| Klient (encja) | `id: UUID`, `imie`, `nazwisko`, `email`, `adres: Adres`. Imię i nazwisko: 1–50 znaków po usunięciu skrajnych spacji, litery Unicode, spacja, apostrof i myślnik. Email: do 254 znaków, sprawdzany parserem adresów email, bez znaków sterujących. |
-| Adres (obiekt wartości) | `ulica: 1–100 znaków`, `numer: 1–10 znaków`, `miasto: 1–60 znaków`, `kodPocztowy: NN-NNN`, `kraj: PL`. Pola wymagane; tekst bez HTML i znaków sterujących. |
-| KontoBankowe (encja) | `id: UUID`, `klientId: UUID`, `numer: NumerRachunku`, `saldo: Pieniadze`, `status: AKTYWNE / ZABLOKOWANE / ZAMKNIETE`. Jeden właściciel, klient może mieć wiele kont. Numer rachunku jest unikalny. Saldo nie może być ujemne. |
-| NumerRachunku (obiekt wartości) | Polski IBAN: `PL` i 26 cyfr, bez spacji w zapisie wewnętrznym. Oprócz formatu sprawdzana suma kontrolna modulo 97. |
-| Pieniadze (obiekt wartości) | `wartosc: Decimal`, maksymalnie dwa miejsca po przecinku, `waluta: PLN`. Nie używam float. Saldo może wynosić 0; kwota przelewu musi być większa od 0 i nie większa niż 10 000,00 PLN. |
-| Przelew (encja) | `id: UUID`, `kontoNadawcyId`, `kontoOdbiorcyId`, `kwota: Pieniadze`, `tytul: 1–140 znaków`, `utworzono: data i czas UTC`, `status: ZLECONY / WYKONANY / ODRZUCONY`. Tytuł jako zwykły tekst bez HTML i znaków sterujących. Konta muszą być różne. |
+| Klient | `id`, `imie`, `nazwisko`, `email`, `adres`. Imię i nazwisko: 1–50 znaków, litery Unicode, spacja, apostrof lub myślnik. Email: poprawny format, do 254 znaków, bez znaków sterujących. |
+| Adres | `ulica` (1–100 znaków), `numer` (1–10), `miasto` (1–60), `kodPocztowy` w formacie NN-NNN, `kraj: PL`. Wszystkie pola wymagane, bez HTML i znaków sterujących. |
+| KontoBankowe | `id`, `klientId`, `numer`, `saldo`, `status`: AKTYWNE, ZABLOKOWANE lub ZAMKNIETE. Jeden właściciel na konto; klient może mieć kilka kont. Saldo nie może być ujemne. |
+| NumerRachunku | Unikalny polski IBAN: PL i 26 cyfr, bez spacji. Sprawdzana także suma kontrolna modulo 97. |
+| Pieniadze | `wartosc: Decimal`, do dwóch miejsc po przecinku, `waluta: PLN`. Saldo może być zerowe. Kwota przelewu: od 0,01 do 10 000,00 PLN. |
+| Przelew | `id`, `kontoNadawcyId`, `kontoOdbiorcyId`, `kwota`, `tytul`, `utworzono`, `status`. Tytuł: 1–140 znaków, bez HTML i znaków sterujących. Data i czas w UTC. Status: ZLECONY, WYKONANY lub ODRZUCONY. |
 
-## Operacje i współpraca
+## Zasady działania
 
-1. Klient może zostać zarejestrowany po sprawdzeniu danych. Kontekst Konta sprawdza istnienie klienta przed otwarciem rachunku.
-2. Zalogowany klient zleca przelew. Tożsamość pochodzi z sesji, a backend sprawdza, czy klient jest właścicielem konta nadawcy; samo podanie ID konta nie daje uprawnienia.
-3. Kontekst Przelewy sprawdza format danych, kwotę i różne ID kont. Kontekst Konta sprawdza istnienie i aktywność obu rachunków oraz dostępne środki.
-4. W tym małym modelu konteksty są modułami jednej aplikacji ze wspólną bazą. Obciążenie nadawcy, uznanie odbiorcy i zmiana statusu na WYKONANY odbywają się w jednej transakcji z blokadą obu kont. Błąd powoduje wycofanie zmian, więc pieniądze nie znikają pomiędzy kontami.
-5. Ponowne żądanie z tym samym ID przelewu zwraca jego dotychczasowy wynik i nie obciąża konta ponownie. Przelewu wykonanego nie można edytować ani wykonać drugi raz.
-6. Dane są sprawdzane na backendzie przy tworzeniu i zmianie obiektów. Hasła i logowanie pozostają poza zakresem modelu; zakładam istniejący moduł uwierzytelniania.
+1. Konto można otworzyć tylko dla istniejącego klienta.
+2. Przelew może zlecić zalogowany właściciel konta nadawcy. Backend sprawdza właściciela na podstawie sesji.
+3. Oba konta muszą istnieć, być aktywne i mieć różne ID. Nadawca musi mieć wystarczające środki.
+4. Zakładam jedną aplikację i wspólną bazę. Obciążenie nadawcy, uznanie odbiorcy i zapis statusu odbywają się w jednej transakcji z blokadą kont. W razie błędu zmiany są cofane.
+5. Ten sam przelew nie może zostać wykonany ponownie. Kolejne żądanie z tym samym ID zwraca zapisany wynik.
+6. Dane są sprawdzane na backendzie przy tworzeniu i zmianie obiektów. Tekst jest przycinany ze skrajnych spacji przed sprawdzeniem długości. Sam mechanizm logowania jest poza zakresem modelu.
