@@ -31,15 +31,19 @@ def list_books_json():
 @books.route('/create', methods=['POST', 'GET'])
 def create_book():
     data = request.get_json()
-
-    new_book = Book(name=data['name'], author=data['author'], year_published=data['year_published'], book_type=data['book_type'])
+    if not isinstance(data, dict) or not all(key in data for key in ('name', 'author', 'year_published', 'book_type')):
+        return jsonify({'error': 'Missing book data'}), 400
 
     try:
+        new_book = Book(name=data['name'], author=data['author'], year_published=data['year_published'], book_type=data['book_type'])
         # Add the new book to the session and commit to save to the database
         db.session.add(new_book)
         db.session.commit()
         print('Book added successfully')
         return redirect(url_for('books.list_books'))
+    except ValueError as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 400
     except Exception as e:
         # Handle any exceptions, such as database errors
         db.session.rollback()
@@ -61,6 +65,8 @@ def edit_book(book_id):
     try:
         # Get data from the request as JSON
         data = request.get_json()
+        if not isinstance(data, dict):
+            return jsonify({'error': 'Invalid book data'}), 400
         
         # Update book details
         book.name = data.get('name', book.name)  # Update if data exists, otherwise keep the same
@@ -72,6 +78,9 @@ def edit_book(book_id):
         db.session.commit()
         print('Book edited successfully')
         return jsonify({'message': 'Book updated successfully'})
+    except ValueError as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 400
     except Exception as e:
         # Handle any exceptions
         db.session.rollback()
