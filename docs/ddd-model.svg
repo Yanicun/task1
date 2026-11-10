@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="510" viewBox="0 0 1000 510">
+ <rect width="1000" height="510" fill="white"/>
+ <style>text{font:16px Arial,sans-serif;fill:#222}.title{font-weight:bold;font-size:20px}.small{font-size:14px}</style>
+ <defs><marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8" fill="#555"/></marker></defs>
+ <g fill="#f5f8fc" stroke="#50729b" stroke-width="2">
+ <rect x="20" y="40" width="285" height="425" rx="8"/><rect x="355" y="40" width="285" height="425" rx="8"/><rect x="690" y="40" width="285" height="425" rx="8"/>
+ </g>
+ <text x="40" y="75" class="title">Kontekst: Klienci</text><text x="375" y="75" class="title">Kontekst: Konta</text><text x="710" y="75" class="title">Kontekst: Przelewy</text>
+ <g fill="white" stroke="#777"><rect x="40" y="100" width="245" height="150"/><rect x="375" y="100" width="245" height="150"/><rect x="710" y="100" width="245" height="200"/><rect x="40" y="320" width="245" height="110"/><rect x="375" y="285" width="245" height="65"/><rect x="375" y="375" width="245" height="65"/></g>
+ <text x="55" y="127" class="title">Klient</text><text x="55" y="151" class="small">encja / korzeń agregatu</text><text x="55" y="180">id, imie, nazwisko</text><text x="55" y="207">email, adres</text>
+ <text x="390" y="127" class="title">KontoBankowe</text><text x="390" y="151" class="small">encja / korzeń agregatu</text><text x="390" y="180">id, klientId, numer</text><text x="390" y="207">saldo, status</text>
+ <text x="725" y="127" class="title">Przelew</text><text x="725" y="151" class="small">encja / korzeń agregatu</text><text x="725" y="180">id, kontoNadawcyId</text><text x="725" y="207">kontoOdbiorcyId, kwota</text><text x="725" y="234">tytul, utworzono, status</text>
+ <text x="55" y="348" class="title">Adres [VO]</text><text x="55" y="375">ulica, numer, miasto</text><text x="55" y="402">kodPocztowy, kraj</text>
+ <text x="390" y="312" class="title">NumerRachunku [VO]</text><text x="390" y="335">IBAN</text><text x="390" y="402" class="title">Pieniadze [VO]</text><text x="390" y="427">wartosc, waluta</text>
+ <g fill="none" stroke="#555" stroke-width="2" marker-end="url(#arrow)"><path d="M375 220 L285 220"/><path d="M710 220 L620 220"/><path d="M160 250 L160 320"/><path d="M500 250 L500 285"/><path d="M400 250 L335 270 L335 405 L375 405"/><path d="M830 300 L830 405 L620 405"/></g>
+ <text x="308" y="210" class="small">ID</text><text x="646" y="210" class="small">2 ID</text><text x="710" y="395" class="small">kwota</text><text x="25" y="495" class="small">VO = obiekt wartości. Strzałki między kontekstami oznaczają referencje po ID.</text>
+</svg>
