@@ -60,7 +60,7 @@ class RouteTests(unittest.TestCase):
         self.context = app.app_context()
         self.context.push()
         self.client = app.test_client()
-        # Żaden test nie zapisuje danych na stałe, nawet gdy endpoint wywoła commit.
+        # Zamiast commit używam flush, żeby po teście cofnąć dane.
         self.commit = patch.object(db.session, 'commit', side_effect=db.session.flush)
         self.commit.start()
 

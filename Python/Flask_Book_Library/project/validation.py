@@ -6,7 +6,7 @@ def validate_text(field, value):
     if not 1 <= len(value) <= 64:
         raise ValueError(f'{field} must have 1 to 64 characters')
 
-    # Zwykły tekst: litery Unicode, cyfry i podstawowa interpunkcja, bez HTML.
+    # Dozwolone znaki poza literami i cyframi.
     punctuation = " .,'’\"-():!?/"
     if any(not (char.isalnum() or char in punctuation) for char in value):
         raise ValueError(f'{field} contains unsupported characters')
